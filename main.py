@@ -2,7 +2,27 @@ import numpy as np
 from celestial_bodies import Galaxy, Star, Planet
 from physics.equations import gravitational_force
 from physics.integrators import update_positions, update_velocities
-from visualization.plot import plot_positions
+from visualization.pygame_visualization import main
+import matplotlib.pyplot as plt
+
+def plot_positions(galaxy):
+    fig, ax = plt.subplots()
+
+    for body in galaxy.get_all_bodies():
+        x, y, z = body.position / 1e9
+        if body.name == "Sun":
+            color = "yellow"
+        else:
+            color = "green"
+        ax.scatter(x, y, c=color)
+
+    plt.xlabel("X (AU)")
+    plt.ylabel("Y (AU)")
+    plt.title("Solar System Positions")
+    plt.grid()
+    plt.axis("equal")
+    plt.show()
+
 
 # Initialize celestial bodies
 milky_way = Galaxy("Milky Way")
@@ -47,3 +67,20 @@ for step in range(simulation_steps):
     # Periodically visualize the simulation
     if step % 52 == 0:  # Every year
         plot_positions(milky_way.get_all_bodies())
+
+def simulation_step():
+    forces = []
+
+    for body1 in milky_way.get_all_bodies():
+        net_force = np.array([0.0, 0.0, 0.0])
+
+        for body2 in milky_way.get_all_bodies():
+            if body1 != body2:
+                net_force += gravitational_force(body1, body2)
+        forces.append(net_force)
+
+    update_positions(milky_way.get_all_bodies(), time_step)
+    update_velocities(milky_way.get_all_bodies(), forces, time_step)
+
+# Run the Pygame visualization
+main(simulation_step, milky_way)
